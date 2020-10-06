@@ -1,18 +1,21 @@
-import {ChangeDetectionStrategy, Component, OnInit} from '@angular/core';
-import {Course} from '../model/course';
-import {Observable} from 'rxjs';
+import {Component, OnInit} from '@angular/core';
+import {compareCourses, Course} from '../model/course';
+import {Observable} from "rxjs";
 import {defaultDialogConfig} from '../shared/default-dialog-config';
 import {EditCourseDialogComponent} from '../edit-course-dialog/edit-course-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
-import {map} from 'rxjs/operators';
-import {CourseEntityService} from '../services/course-entity.service';
+import {map, shareReplay} from 'rxjs/operators';
+import {CoursesHttpService} from '../services/courses-http.service';
+import {AppState} from '../../reducers';
+import {select, Store} from '@ngrx/store';
+import {selectAdvancedCourses, selectBeginnerCourses, selectPromoTotal} from '../courses.selectors';
+
 
 
 @Component({
     selector: 'home',
     templateUrl: './home.component.html',
-    styleUrls: ['./home.component.css'],
-    changeDetection: ChangeDetectionStrategy.OnPush
+    styleUrls: ['./home.component.css']
 })
 export class HomeComponent implements OnInit {
 
@@ -22,9 +25,10 @@ export class HomeComponent implements OnInit {
 
     advancedCourses$: Observable<Course[]>;
 
+
     constructor(
       private dialog: MatDialog,
-      private coursesService: CourseEntityService) {
+      private store: Store<AppState>) {
 
     }
 
@@ -34,20 +38,11 @@ export class HomeComponent implements OnInit {
 
   reload() {
 
-    this.beginnerCourses$ = this.coursesService.entities$
-      .pipe(
-        map(courses => courses.filter(course => course.category == 'BEGINNER'))
-      );
+        this.beginnerCourses$ = this.store.pipe(select(selectBeginnerCourses));
 
-    this.advancedCourses$ = this.coursesService.entities$
-      .pipe(
-        map(courses => courses.filter(course => course.category == 'ADVANCED'))
-      );
+        this.advancedCourses$ = this.store.pipe(select(selectAdvancedCourses));
 
-    this.promoTotal$ = this.coursesService.entities$
-        .pipe(
-            map(courses => courses.filter(course => course.promo).length)
-        );
+        this.promoTotal$ = this.store.pipe(select(selectPromoTotal));
 
   }
 
